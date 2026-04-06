@@ -1,5 +1,13 @@
 # pragma version ==0.4.3
 # pragma nonreentrancy off
+"""
+@title `Coins` - ERC20 compatible coins registry
+@custom:contract-name Coins
+@license MIT
+@author Rafael Abuawad <x.com/rabuawad_>
+@notice This code is for testing purposes only, is not production ready and is not audited.
+        Everything is subject to change. Use at your own risk.
+"""
 
 
 event TokenCreated:

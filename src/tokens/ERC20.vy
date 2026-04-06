@@ -1,5 +1,15 @@
 # pragma version ==0.4.3
 # pragma nonreentrancy on
+"""
+@title `ERC20` - ERC20 reference implementation
+@custom:contract-name ERC20
+@license MIT
+@author Rafael Abuawad <x.com/rabuawad_>
+@notice This code is for testing purposes only, is not production ready and is not audited.
+        Everything is subject to change. Use at your own risk.
+"""
+
+
 
 from ..interfaces import ICoins
 
