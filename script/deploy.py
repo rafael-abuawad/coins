@@ -13,5 +13,5 @@ def deploy() -> VyperContract:
     return coins
 
 
-def moccasin_main() -> DeployResult:
+def moccasin_main() -> VyperContract:
     return deploy()

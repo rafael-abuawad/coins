@@ -12,38 +12,68 @@ This repository is a Vyper port built with [Moccasin](https://cyfrin.github.io/m
 
 ## What’s in this repo
 
-- A singleton [`Coins`](src/Coins.vy) registry: per-token metadata (name, symbol, decimals), aggregate supply, per-holder balances, allowances, ownership, plus a canonical mapping token id ↔ façade (`convert(facade, uint256)` is the id; the read-only accessor is `Coins.id`).
-- Mutating hooks on `Coins` only succeed when `msg.sender` is that token’s registered façade (`_checkCallerIsToken`).
-- Per-token façades spawned with [`create_from_blueprint`](src/Coins.vy); source is [`ERC20`](src/tokens/ERC20.vy). They expose ERC-20 transfers and approvals plus `mint`, `burn`, `burnFrom`, `transferOwnership`, and `renounceOwnership`, forwarding into `Coins` with an immutable façade id (`ID`).
-- `create` registers a new coin: owner is `msg.sender`, façade address is recorded, logs `TokenCreated`.
+| Path | Role |
+|------|------|
+| [`src/coins.vy`](src/coins.vy) | `Coins` registry: per-token metadata (`name`, `symbol`, `decimals` with max lengths **25** / **5**), aggregate supply, per-holder balances, allowances, ownership, and a mapping from numeric token id to façade (`_ids`). |
+| [`src/tokens/erc20.vy`](src/tokens/erc20.vy) | Per-token façade (`erc20`): ERC-20-style surface (`transfer`, `transferFrom`, `approve`, `mint`, `burn`, `burnFrom`, `transferOwnership`, `renounceOwnership`) that forwards into `Coins` with immutable registry pointer (`COINS`) and façade id (`ID = convert(self, uint256)`). |
+
+- **`Coins.create`** — `create_from_blueprint` deploys a façade bound to this registry, initializes metadata and sets the token owner to **`msg.sender`**, emits **`TokenCreated`** (`_id`, `_token`), returns the façade address.
+- **Authorization** — Mutating registry functions include the token **`id`** as the first argument and require **`msg.sender == _ids[id]`** (the façade). Users and integrators normally call the façade; the registry is the shared backend.
+- **Minting** — `mint` on the registry checks that the **`caller`** argument (the façade forwards `msg.sender`) is that token’s **`owner`** stored on `Coins`. There is no separate minter role in this port.
+
+Compiler output and metadata are written under **`out/`** (see [`moccasin.toml`](moccasin.toml)).
 
 ## Lifecycle (this port)
 
-On `Coins`:
+On **`Coins`** (typically only the façade calls these):
 
-- **`create`** — deploy a façade blueprint instance, initialize metadata and owner (`msg.sender`), emit `TokenCreated`, return façade address.
+- **`create`** — new façade + metadata + owner; emit `TokenCreated`; return façade address.
 
-Via that coin’s façade (forwarded through `Coins`):
+Via each coin’s façade (standard ERC-20 ergonomics; forwards into `Coins` with `ID`):
 
-- **`mint`** — only the configured `owner` on `Coins` may mint (upstream may expose a distinct minter; this repo does **not**).
-- **`transfer` / `transferFrom` / `approve`** — standard ERC-20 flow.
-- **`burn`**, **`burnFrom`** — shrink supply (`burn` from caller balance; `burnFrom` burns from an owner’s balance when the caller is allowed).
-- **`transferOwnership`**, **`renounceOwnership`** — façade-level admin mirrored on `Coins`; after renounce or moving owner to `empty(address)`, `mint` reverts.
+- **`mint`** — registry owner only (same note as above).
+- **`transfer`**, **`transferFrom`**, **`approve`** — usual ERC-20 flow on the façade; registry updates balances and allowances under the façade id.
+- **`burn`**, **`burnFrom`** — reduce supply; `burnFrom` consumes allowance where applicable.
+- **`transferOwnership`**, **`renounceOwnership`** — owner updates on `Coins`; once there is no owner, **`mint`** reverts.
 
 ## Quickstart
 
-1. Install deps (repo uses **[uv](https://docs.astral.sh/uv/)**):
+1. Install dependencies (this repo uses **[uv](https://docs.astral.sh/uv/)**):
 
 ```bash
 uv sync
 ```
 
-2. Run tests (`moccasin` discovers `tests/` and compiles contracts from `src/`):
+2. Compile contracts:
+
+```bash
+mox compile
+```
+
+3. Run tests (`moccasin` discovers `tests/` and compiles from `src/`):
 
 ```bash
 mox test
 ```
 
-Deployment ordering in local tests mirrors what you’d do onchain: deploy the façade as a **blueprint**, deploy `Coins(blueprint)`, then callers invoke `Coins.create`; see [`tests/conftest.py`](tests/conftest.py).
+Local test setup deploys the façade as a **blueprint**, deploys **`Coins`** with that blueprint address, then uses **`Coins.create`** under pranks; see [`tests/conftest.py`](tests/conftest.py).
 
-For CLI help, run `mox --help` or see the [Moccasin documentation](https://cyfrin.github.io/moccasin).
+For CLI help: `mox --help` and the [Moccasin documentation](https://cyfrin.github.io/moccasin).
+
+## Scripts
+
+[`script/deploy.py`](script/deploy.py) deploys the erc20 blueprint and **`Coins`** registry (same ordering as tests), prints both addresses, and returns the registry wrapper when invoked via Moccasin:
+
+```bash
+mox run deploy
+```
+
+Use **`--network <name>`** (and wallet flags if needed) to target a live RPC—configured aliases live in [`moccasin.toml`](moccasin.toml) (`pyevm`, `anvil`, `sepolia`, `zksync-sepolia`, …).
+
+## Linting
+
+`mox lint` runs the **natrix** Vyper linter when installed (`uv tool install natrix`). Python formatting/lint for scripts and tests can use **ruff** from the project environment (for example `uv run ruff check .`).
+
+## Safety
+
+Contracts are marked **not production ready** and **not audited** in their NatSpec—treat them as experimental for learning and integration testing, not as a substitute for review before any onchain deployment.
