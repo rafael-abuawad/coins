@@ -12,23 +12,38 @@ This repository is a Vyper port built with [Moccasin](https://cyfrin.github.io/m
 
 ## What’s in this repo
 
-- A singleton [`Coins`](src/Coins.vy) contract holding names, symbols, decimals, supplies, balances, allowances, owners, and minters keyed by token id (the id matches the per-coin ERC-20 contract address).
-- Per-coin ERC-20 facades deployed with `create_from_blueprint` ([`ERC20`](src/tokens/ERC20.vy)); they expose standard ERC-20-style entrypoints and forward state changes to `Coins`.
-- `Coins` only accepts balance and allowance updates when `msg.sender` is the token for that id, so users and integrations interact through the lightweight ERC-20 at each coin’s address.
-- Token lifecycle: `create` on `Coins`; owner can `setMinter`, `transferOwnership`, and `renounceOwnership` (via the token); minters authorized on `Coins` can `mint` through the token.
+- A singleton [`Coins`](src/Coins.vy) registry: per-token metadata (name, symbol, decimals), aggregate supply, per-holder balances, allowances, ownership, plus a canonical mapping token id ↔ façade (`convert(facade, uint256)` is the id; the read-only accessor is `Coins.id`).
+- Mutating hooks on `Coins` only succeed when `msg.sender` is that token’s registered façade (`_checkCallerIsToken`).
+- Per-token façades spawned with [`create_from_blueprint`](src/Coins.vy); source is [`ERC20`](src/tokens/ERC20.vy). They expose ERC-20 transfers and approvals plus `mint`, `burn`, `burnFrom`, `transferOwnership`, and `renounceOwnership`, forwarding into `Coins` with an immutable façade id (`ID`).
+- `create` registers a new coin: owner is `msg.sender`, façade address is recorded, logs `TokenCreated`.
+
+## Lifecycle (this port)
+
+On `Coins`:
+
+- **`create`** — deploy a façade blueprint instance, initialize metadata and owner (`msg.sender`), emit `TokenCreated`, return façade address.
+
+Via that coin’s façade (forwarded through `Coins`):
+
+- **`mint`** — only the configured `owner` on `Coins` may mint (upstream may expose a distinct minter; this repo does **not**).
+- **`transfer` / `transferFrom` / `approve`** — standard ERC-20 flow.
+- **`burn`**, **`burnFrom`** — shrink supply (`burn` from caller balance; `burnFrom` burns from an owner’s balance when the caller is allowed).
+- **`transferOwnership`**, **`renounceOwnership`** — façade-level admin mirrored on `Coins`; after renounce or moving owner to `empty(address)`, `mint` reverts.
 
 ## Quickstart
 
-1. Deploy to Moccasin’s local network:
+1. Install deps (repo uses **[uv](https://docs.astral.sh/uv/)**):
 
 ```bash
-mox run deploy
+uv sync
 ```
 
-2. Run tests:
+2. Run tests (`moccasin` discovers `tests/` and compiles contracts from `src/`):
 
 ```bash
 mox test
 ```
+
+Deployment ordering in local tests mirrors what you’d do onchain: deploy the façade as a **blueprint**, deploy `Coins(blueprint)`, then callers invoke `Coins.create`; see [`tests/conftest.py`](tests/conftest.py).
 
 For CLI help, run `mox --help` or see the [Moccasin documentation](https://cyfrin.github.io/moccasin).

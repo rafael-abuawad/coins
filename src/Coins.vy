@@ -23,7 +23,6 @@ _decimals: HashMap[uint256, uint8]
 _total_supply: HashMap[uint256, uint256]
 _balances: HashMap[uint256, HashMap[address, uint256]]
 _allowances: HashMap[uint256, HashMap[address, HashMap[address, uint256]]]
-_is_minter: HashMap[uint256, HashMap[address, bool]]
 _owners: HashMap[uint256, address]
 _ids: HashMap[uint256, address]
 
@@ -72,12 +71,6 @@ def allowance(id: uint256, owner: address, spender: address) -> uint256:
 
 @view
 @external
-def isMinter(id: uint256, account: address) -> bool:
-    return self._is_minter[id][account]
-
-
-@view
-@external
 def owner(id: uint256) -> address:
     return self._owners[id]
 
@@ -101,15 +94,15 @@ def transfer(
 
 @external
 def transferFrom(
-    id: uint256, caller: address, _from: address, to: address, amount: uint256
+    id: uint256, caller: address, owner: address, to: address, amount: uint256
 ) -> bool:
     self._checkCallerIsToken(id)
     assert to != empty(address), "coins: cannot transfer to empty address"
-    assert self._allowances[id][_from][caller] >= amount, "coins: allowance is not enough"
-    assert self._balances[id][_from] >= amount, "coins: balance is not enough"
+    assert self._allowances[id][owner][caller] >= amount, "coins: allowance is not enough" # nosplit
+    assert self._balances[id][owner] >= amount, "coins: balance is not enough"
 
-    self._allowances[id][_from][caller] -= amount
-    self._balances[id][_from] -= amount
+    self._allowances[id][owner][caller] -= amount
+    self._balances[id][owner] -= amount
     self._balances[id][to] += amount
     return True
 
@@ -119,7 +112,6 @@ def approve(
     id: uint256, caller: address, spender: address, allowance: uint256
 ) -> bool:
     self._checkCallerIsToken(id)
-    assert caller != spender, "coins: cannot approve itself"
     self._allowances[id][caller][spender] = allowance
     return True
 
@@ -127,25 +119,33 @@ def approve(
 @external
 def mint(id: uint256, caller: address, to: address, amount: uint256):
     self._checkCallerIsToken(id)
-    assert self._is_minter[id][caller], "coins: caller is not minter"
+    assert caller == self._owners[id], "coins: caller is not owner"
     self._total_supply[id] += amount
     self._balances[id][to] += amount
 
 
 @external
-def setMinter(id: uint256, caller: address, minter: address, status: bool):
+def burnFrom(id: uint256, caller: address, owner: address, amount: uint256):
     self._checkCallerIsToken(id)
-    assert caller == self._owners[id], "coins: caller is not owner"
-    assert minter != empty(address), "coins: minter is the zero address"
-    assert minter != caller, "coins: minter is owner address"
-    self._is_minter[id][minter] = status
+    assert (
+        self._allowances[id][owner][caller] >= amount
+    ), "coins: caller is not owner or allowed"
+    self._allowances[id][owner][caller] -= amount
+    self._total_supply[id] -= amount
+    self._balances[id][owner] -= amount
+
+
+@external
+def burn(id: uint256, caller: address, amount: uint256):
+    self._checkCallerIsToken(id)
+    self._total_supply[id] -= amount
+    self._balances[id][caller] -= amount
 
 
 @external
 def transferOwnership(id: uint256, caller: address, new_owner: address):
     self._checkCallerIsToken(id)
-    self._is_minter[id][caller] = False
-    self._is_minter[id][new_owner] = False
+    assert caller == self._owners[id], "coins: caller is not owner"
     self._owners[id] = new_owner
 
 
@@ -153,7 +153,6 @@ def transferOwnership(id: uint256, caller: address, new_owner: address):
 def renounceOwnership(id: uint256, caller: address):
     self._checkCallerIsToken(id)
     assert caller == self._owners[id], "coins: caller is not owner"
-    self._is_minter[id][caller] = False
     self._owners[id] = empty(address)
 
 
@@ -167,7 +166,6 @@ def create(name: String[25], symbol: String[5], decimals: uint8) -> address:
     self._symbols[token_id] = symbol
     self._decimals[token_id] = decimals
     self._owners[token_id] = msg.sender
-    self._is_minter[token_id][msg.sender] = True
     log TokenCreated(_id=token_id, _token=token)
     return token
 

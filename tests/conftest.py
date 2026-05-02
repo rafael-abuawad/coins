@@ -1,7 +1,7 @@
 import pytest
 import boa
 from src import Coins
-from src.tokens import ERC20
+from src.tokens import erc20
 
 
 @pytest.fixture()
@@ -27,7 +27,7 @@ def charlie():
 
 @pytest.fixture
 def token_blueprint():
-    return ERC20.deploy_as_blueprint()
+    return erc20.deploy_as_blueprint()
 
 
 @pytest.fixture
@@ -50,6 +50,6 @@ def deploy_erc20(coins_contract):
     ):
         with boa.env.prank(creator):
             token_addr = coins_contract.create(name, symbol, decimals)
-        return ERC20.at(token_addr)
+        return erc20.at(token_addr)
 
     return _deploy
