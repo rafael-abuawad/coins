@@ -1,5 +1,6 @@
 # pragma version ==0.4.3
 # pragma nonreentrancy on
+# pragma venom-experimental
 """
 @title `erc20` - ERC20 Coins implementation
 @custom:contract-name erc20
@@ -16,33 +17,15 @@ interface ICoins:
     def decimals(id: uint256) -> uint8: view
     def totalSupply(id: uint256) -> uint256: view
     def balanceOf(id: uint256, owner: address) -> uint256: view
-    def allowance(
-        id: uint256, owner: address, spender: address
-    ) -> uint256: view
+    def allowance(id: uint256, owner: address, spender: address) -> uint256: view
     def owner(id: uint256) -> address: view
-    def transfer(
-        id: uint256, caller: address, to: address, amount: uint256
-    ) -> bool: nonpayable
-    def transferFrom(
-        id: uint256,
-        caller: address,
-        owner: address,
-        to: address,
-        amount: uint256,
-    ) -> bool: nonpayable
-    def approve(
-        id: uint256, caller: address, spender: address, allowance: uint256
-    ) -> bool: nonpayable
-    def mint(
-        id: uint256, caller: address, to: address, amount: uint256
-    ): nonpayable
-    def burnFrom(
-        id: uint256, caller: address, owner: address, amount: uint256
-    ): nonpayable
+    def transfer(id: uint256, caller: address, to: address, amount: uint256) -> bool: nonpayable
+    def transferFrom(id: uint256, caller: address, owner: address, to: address, amount: uint256) -> bool: nonpayable
+    def approve(id: uint256, caller: address, spender: address, allowance: uint256) -> bool: nonpayable
+    def mint(id: uint256, caller: address, to: address, amount: uint256): nonpayable
+    def burnFrom(id: uint256, caller: address, owner: address, amount: uint256): nonpayable
     def burn(id: uint256, caller: address, amount: uint256): nonpayable
-    def transferOwnership(
-        id: uint256, caller: address, new_owner: address
-    ): nonpayable
+    def transferOwnership(id: uint256, caller: address, new_owner: address): nonpayable
     def renounceOwnership(id: uint256, caller: address): nonpayable
 
 

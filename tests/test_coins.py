@@ -15,7 +15,7 @@ class TestCoinsRegistry:
         self, coins_contract, bob
     ):
         with boa.env.prank(bob):
-            token_addr = coins_contract.create("River", "RIV", 12)
+            token_addr = coins_contract.create("River", "RIV", 12, 0)
         token = erc20.at(token_addr)
         tid = _token_id(token)
 
@@ -25,6 +25,17 @@ class TestCoinsRegistry:
         assert len(created) == 1
         assert created[0]._1 == tid
         assert created[0]._2 == token.address
+
+    def test_create_initial_supply_mints_to_creator(self, coins_contract, bob):
+        amt = 1_000 * 10**18
+        with boa.env.prank(bob):
+            token_addr = coins_contract.create("Air", "AIR", 18, amt)
+        token = erc20.at(token_addr)
+        tid = _token_id(token)
+        assert token.balanceOf(bob) == amt
+        assert token.totalSupply() == amt
+        assert coins_contract.balanceOf(tid, bob) == amt
+        assert coins_contract.totalSupply(tid) == amt
 
     def test_registry_views_match_token_facade(self, deploy_erc20, bob, coins_contract):
         t = deploy_erc20(bob, "Registry", "REG", 9)

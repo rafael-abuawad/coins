@@ -1,5 +1,6 @@
 # pragma version ==0.4.3
 # pragma nonreentrancy off
+# pragma venom-experimental
 """
 @title `Coins` - ERC20 compatible coins registry
 @custom:contract-name Coins
@@ -157,7 +158,12 @@ def renounceOwnership(id: uint256, caller: address):
 
 
 @external
-def create(name: String[25], symbol: String[5], decimals: uint8) -> address:
+def create(
+    name: String[25],
+    symbol: String[5],
+    decimals: uint8,
+    initial_supply: uint256,
+) -> address:
     token: address = create_from_blueprint(TOKEN_BLUEPRINT, self)
     token_id: uint256 = convert(token, uint256)
 
@@ -166,6 +172,11 @@ def create(name: String[25], symbol: String[5], decimals: uint8) -> address:
     self._symbols[token_id] = symbol
     self._decimals[token_id] = decimals
     self._owners[token_id] = msg.sender
+
+    if initial_supply > 0:
+        self._total_supply[token_id] += initial_supply
+        self._balances[token_id][msg.sender] += initial_supply
+
     log TokenCreated(_id=token_id, _token=token)
     return token
 

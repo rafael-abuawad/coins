@@ -47,9 +47,10 @@ def deploy_erc20(coins_contract):
         name: str = "Wrapped Ether",
         symbol: str = "WETH",
         decimals: int = 18,
+        initial_supply: int = 0,
     ):
         with boa.env.prank(creator):
-            token_addr = coins_contract.create(name, symbol, decimals)
+            token_addr = coins_contract.create(name, symbol, decimals, initial_supply)
         return erc20.at(token_addr)
 
     return _deploy
