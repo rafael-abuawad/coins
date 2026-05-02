@@ -133,7 +133,7 @@ def burn(amount: uint256):
 
 @external
 def burnFrom(owner: address, amount: uint256):
-    log Transfer(_from=msg.sender, _to=empty(address), _amount=amount)
+    log Transfer(_from=owner, _to=empty(address), _amount=amount)
     extcall COINS.burnFrom(ID, msg.sender, owner, amount)
 
 

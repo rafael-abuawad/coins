@@ -70,6 +70,17 @@ mox run deploy
 
 Use **`--network <name>`** (and wallet flags if needed) to target a live RPC—configured aliases live in [`moccasin.toml`](moccasin.toml) (`pyevm`, `anvil`, `sepolia`, `zksync-sepolia`, …).
 
+## Deployments
+
+Canonical **`Coins`** registry addresses and deployment blocks live in [`deployments.json`](deployments.json) (keyed by EIP-155 chain id).
+
+| Chain | Chain id | `Coins` registry | Deployed at block |
+|-------|----------|------------------|-------------------|
+| Ethereum | `1` | [`0x0d3508A5bEB6DbF4C67282c38fb08674Ae2d1280`](https://etherscan.io/address/0x0d3508A5bEB6DbF4C67282c38fb08674Ae2d1280) | 25008464 |
+| Base | `8453` | [`0xCebb1007277377f83F51651EBF94b18C0f99b62E`](https://basescan.org/address/0xCebb1007277377f83F51651EBF94b18C0f99b62E) | 45474723 |
+
+Each coin’s façade is created with **`Coins.create`**; individual façade addresses are not listed in `deployments.json`.
+
 ## Linting
 
 `mox lint` runs the **natrix** Vyper linter when installed (`uv tool install natrix`). Python formatting/lint for scripts and tests can use **ruff** from the project environment (for example `uv run ruff check .`).

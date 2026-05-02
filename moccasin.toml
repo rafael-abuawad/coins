@@ -6,20 +6,25 @@ dot_env = ".env"
 [networks.pyevm]
 is_zksync = false
 
-[networks.anvil]
-url = "http://127.0.0.1:8545"
-prompt_live = false
-save_to_db = false
-chain_id = 31337
+[networks.ethereum]
+url = "https://eth-mainnet.g.alchemy.com/v2/YU1znYiEoytfXYooe_oPk"
+chain_id = 1
+save_to_db = true
+explorer_uri = "https://eth.blockscout.com"
+explorer_type = "blockscout"
 
-[networks.sepolia]
-url = "https://ethereum-sepolia-rpc.publicnode.com"
-chain_id = 11155111
+[networks.arbitrum]
+url = "https://arb-mainnet.g.alchemy.com/v2/YU1znYiEoytfXYooe_oPk"
+chain_id = 42161 
+save_to_db = true
+explorer_uri = "https://arbitrum.blockscout.com"
+explorer_type = "blockscout"
 
-[networks.zksync-sepolia]
-url = "https://sepolia.era.zksync.dev"
-chain_id = 300
-is_zksync = true
-prompt_live = true
+[networks.base]
+url = "https://base-mainnet.g.alchemy.com/v2/YU1znYiEoytfXYooe_oPk"
+chain_id = 8453
+save_to_db = true
+explorer_uri = "https://base.blockscout.com"
+explorer_type = "blockscout"
 
 # You can view all configuration options at https://cyfrin.github.io/moccasin/all_moccasin_toml_parameters.html
