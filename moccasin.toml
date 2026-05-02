@@ -7,24 +7,15 @@ dot_env = ".env"
 is_zksync = false
 
 [networks.ethereum]
-url = "https://eth-mainnet.g.alchemy.com/v2/YU1znYiEoytfXYooe_oPk"
+url = "https://eth-mainnet.g.alchemy.com/v2/{ALCHEMY_API_KEY}"
 chain_id = 1
 save_to_db = true
 explorer_uri = "https://eth.blockscout.com"
 explorer_type = "blockscout"
 
-[networks.arbitrum]
-url = "https://arb-mainnet.g.alchemy.com/v2/YU1znYiEoytfXYooe_oPk"
-chain_id = 42161 
-save_to_db = true
-explorer_uri = "https://arbitrum.blockscout.com"
-explorer_type = "blockscout"
-
 [networks.base]
-url = "https://base-mainnet.g.alchemy.com/v2/YU1znYiEoytfXYooe_oPk"
+url = "https://base-mainnet.g.alchemy.com/v2/{ALCHEMY_API_KEY}"
 chain_id = 8453
 save_to_db = true
 explorer_uri = "https://base.blockscout.com"
 explorer_type = "blockscout"
-
-# You can view all configuration options at https://cyfrin.github.io/moccasin/all_moccasin_toml_parameters.html
